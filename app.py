@@ -61,11 +61,13 @@ def create_ui(data: pd.DataFrame):
                 ),
             )
         ),
+        ui.panel_conditional(
+            "input.copy_to_clipboard > 0",
         ui.row(
             ui.column(
                 6,
-                ui.output_text("code_snippet"),
-            )
+                ui.output_text_verbatim("code_snippet"))
+            ),
         ),
     )
     return app_ui
@@ -120,17 +122,33 @@ def create_server(data):
         @render.text
         @reactive.event(input.copy_to_clipboard, ignore_none=False)
         def code_snippet():
-            nl = "\n"
-            code_lines = [
-                "import pyrsm as rsm",
-                f"lr = rsm.logistic_regression(dataset={df_name}, rvar={input.resp_var()}, evars={input.expl_var()})",
-                f"lr.regress()",
-            ]
-            code_f_string = "\n".join(code_lines)
+            """Generate Python code for logistic regression using the 'pyrsm' package."""
+            resp_var = input.resp_var
+            expl_var = input.expl_var
+        
+            code_template = """import pyrsm as rsm
 
-            pyperclip.copy(code_f_string)
+lr = rsm.logistic_regression(dataset='{df_name}', rvar='{resp_var}', evars={expl_var})
 
-            return code_f_string
+lr.regress()
+            """
+            code_string = code_template.format(
+                df_name  = df_name,
+                resp_var=resp_var(),
+                expl_var=expl_var()
+                
+            )
+            
+            try:
+               exec(code_string) 
+               return f'eval("""{code_string}""")'
+            except Exception as e:
+                return f"Error: {str(e)}"
+        
+
+            pyperclip.copy(code_string)
+
+            return code_string
 
     return f
 
