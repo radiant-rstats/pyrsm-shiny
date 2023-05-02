@@ -8,8 +8,6 @@ import sys
 from shiny import App, render, ui, reactive, Inputs, Outputs, Session
 from shiny.types import FileInfo
 
-# import pyperclip
-
 app_ui = ui.page_fluid(
     ui.layout_sidebar(
         ui.panel_sidebar(
@@ -109,7 +107,8 @@ def server(input: Inputs, output: Outputs, session: Session):
             df_cols = []
         else:
             df_cols = list(load_data().columns)
-            df_cols.remove(input.rvar())
+            if (input.rvar() is not None) and (input.rvar() in df_cols):
+                df_cols.remove(input.rvar())
         return ui.input_select(
             id="evar",
             label="Explanatory Variables",
